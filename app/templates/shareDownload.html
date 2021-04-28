@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>个人网盘助手-文件下载</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <script src="/static/layui/layui.all.js"></script>
+    <script src="/static/jquery.js"></script>
+</head>
+<ul class="layui-nav layui-bg-blue">
+    <li class="layui-nav-item layui-this"><center>分享文件下载</center></li>
+</ul>
+<br>
+<body>
+<div class="layui-container">
+    <fieldset class="layui-elem-field">
+        <legend>文件下载</legend>
+        <div class="layui-field-box">
+         <div class="layui-form-item">
+              <label class="layui-form-label">下载密码</label>
+              <div class="layui-input-block">
+                <input type="password" id="pwd" value="" required  lay-verify="required" placeholder="请输入下载密码" autocomplete="off" class="layui-input">
+            </div>
+         </div>
+        </div>
+      </fieldset>
+      <button type="button" class="layui-btn layui-btn-normal" onclick="getFile(id)" id={{id}}>获取</button>
+      `<table class="layui-table">
+        <colgroup>
+        <col width="350">
+        <col width="250">
+        <col width="250">
+        <col>
+        </colgroup>
+        <thead>
+        <tr>
+            <th>文件名称</th>
+            <th>文件大小</th>
+            <th>过期时间</th>
+            <th>文件下载</th>
+        </tr> 
+        </thead>
+        <tbody>
+        <tr id='file_info'>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+</body>
+</html>
+<script>
+function getFile(params) {
+    var pwd = document.getElementById('pwd').value
+    if (pwd!='') {
+        $.ajax({
+        type:'get',//get或post
+        url:'/api/file/share/download/info',//请求的地址
+        async:true,
+        data:{
+            'share_url':params,
+            'pwd':pwd
+        },
+        dataType:'json',//text,json,xml,jsonp
+        success:function(res){
+            if (res.code==200) {
+                table_html = 
+                `<td>${res.data.file_name}</td>
+                <td>${res.data.file_size}</td>
+                <td>${res.data.share_last_time}</td>
+                <td><a href='${res.data.file_download}'>下载</a></td>`
+            $("#file_info").html(table_html)
+            }if(res.code==302){
+                layer.msg(res.msg,{'icon':2})
+            }
+        },error:function(res){},
+    })
+    }else{
+        layer.msg("请输入密码",{'icon':2})
+    }
+}
+</script>

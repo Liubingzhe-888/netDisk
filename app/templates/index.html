@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>个人网盘助手</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+    <link rel="shortcut icon" href="{{url_for('static', filename='favicon.ico')  }}" />
+    <!-- <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.js"></script> -->
+    <script src="/static/layui/layui.all.js"></script>
+    <script src="/static/jquery.js"></script>
+    <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+</head>
+<ul class="layui-nav layui-bg-blue">
+    <li class="layui-nav-item"><a href="">
+            <h2>个人网盘助手</h2>
+        </a></li>
+    <li class="layui-nav-item layui-this"><a href="/index">首页</a></li>
+    <li class="layui-nav-item"><a target='_blank'
+            onclick='window.location.href="/upload/"+localStorage.getItem("now_dir")'>文件上传</a></li>
+    <li class="layui-nav-item"><a href="/share/admin">分享管理</a></li>
+    <li class="layui-nav-item"><a href="/api/login/out">退出登陆</a></li>
+    <li class="layui-nav-item">
+        <div id='time'></div>
+    </li>
+</ul>
+
+<body>
+    <div class="layui-container">
+        <br>
+        <table id="fileTable" lay-filter="fileTable"></table>
+    </div>
+</body>
+
+
+
+
+<script type="text/html" id="toolbar">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm layui-btn-normal" lay lay-event="getInfo">信息</button>
+        <button type="button" class="layui-btn layui-btn-sm layui-btn-normal"  lay lay-event="flash">刷新当前</button>
+      <button class="layui-btn layui-btn-sm layui-btn" lay lay-event="returnDir">返回上一层</button>
+      <button class="layui-btn layui-btn-sm layui-btn" lay lay-event="returnTopDir">返回顶层</button>
+      <button class="layui-btn layui-btn-sm layui-btn layui-btn-danger" lay-event="batchDeleteFile">批量删除</button>
+      <button class="layui-btn layui-btn-sm layui-btn layui-btn-danger" lay-event="move">移动</button>
+      <button class="layui-btn layui-btn-sm layui-btn layui-btn-danger" onclick="createDir('notice')">新建文件夹</button>
+    </div>
+</script>
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="toDir">进入</a>
+    <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="view">查看</a>
+    <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="share">分享</a>
+    <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="download">下载</a>
+</script>
+
+</html>
+<script>
+    function NowTime() {
+        var myDate = new Date();
+        var y = myDate.getFullYear();
+        var M = myDate.getMonth() + 1;     //获取当前月份(0-11,0代表1月)
+        var d = myDate.getDate();        //获取当前日(1-31)
+        var h = myDate.getHours();       //获取当前小时数(0-23)
+        var m = myDate.getMinutes();     //获取当前分钟数(0-59)
+        var s = myDate.getSeconds();     //获取当前秒数(0-59)
+
+        //检查是否小于10
+        M = check(M);
+        d = check(d);
+        h = check(h);
+        m = check(m);
+        s = check(s);
+        var timestr = y + "-" + M + "-" + d + " " + h + ":" + m + ":" + s;
+        document.getElementById("time").innerHTML = "当前时间：" + timestr;
+    }
+    //时间数字小于10，则在之前加个“0”补位。
+    function check(i) {
+        var num = (i < 10) ? ("0" + i) : i;
+        return num;
+    }
+</script>
+
+<!-- <script src="http://pv.sohu.com/cityjson?ie=utf-8"></script>
+<script type="text/javascript">
+    console.log(returnCitySN["cip"] + ',' + returnCitySN["cname"])
+    $("#ip").html(returnCitySN["cip"])
+    $("#position").html(returnCitySN["cname"])
+</script> -->
+
+
+<script>
+    //页面加载调用
+    window.onload = function () {
+        //每1秒刷新时间
+        setInterval("NowTime()", 1000);
+    }
+</script>
+
+<script>
+    // 默认设置为root根目录
+    localStorage.setItem('file_superior_dir', 0)
+    layui.use(['layer', 'jquery', 'element', 'form'], function (args) {
+        var $ = layui.jquery, layer = layui.layer, element = layui.element, form = layui.form, table = layui.table;
+        table.render({
+            elem: '#fileTable',
+            height: 500,
+            skin: 'row',
+            size: 'lg',
+            even: true,
+            toolbar: '#toolbar',
+            defaultToolbar: ['filter', 'print', 'exports'],
+            url: '/api/file/query/total/' + localStorage.getItem('file_superior_dir'),
+            page: true,
+            limit: 10,
+            cols: [[
+                { type: 'checkbox', fixed: 'left' }
+                // , { field: 'id', title: 'ID', width: 80, sort: true, fixed: 'left' }
+                , { field: 'file_name', title: '文件名', edit: true, width: 280 }
+                , { field: 'file_size', title: '文件大小', sort: true }
+                , { field: 'file_type', title: '文件类型' }
+                , { field: 'file_create_time', title: '上传时间', width: 200 }
+                , { field: 'file_upload_user', title: '上传者' }
+                , { field: 'file_superior_dir', title: '所属文件夹' }
+                , { fixed: 'right', title: '操作', toolbar: '#barDemo', width: 230 }
+            ]],
+            id: 'testReload',
+            done: function (res, curr, count) {
+                console.log('res, curr, count: ', res, curr, count);
+                father = res.now_dir
+                // localStorage.setItem('last_dir', localStorage.getItem('father_dir'))
+                // localStorage.setItem('father_dir', father)
+                localStorage.setItem('now_dir', res.now_dir)
+                localStorage.setItem('father_dir', res.father_dir)
+            }
+            , response: {
+                statusName: 'code' //规定数据状态的字段名称，默认：code
+                , statusCode: 200 //规定成功的状态码，默认：0
+                , msgName: 'msg' //规定状态信息的字段名称，默认：msg
+                , countName: 'total' //规定数据总数的字段名称，默认：count
+                , dataName: 'data' //规定数据列表的字段名称，默认：data
+            }
+            , parseData: function (res) { //res 即为原始返回的数据
+                return {
+                    "code": res.code, //解析接口状态
+                    "msg": res.msg, //解析提示文本
+                    "total": res.total, //解析数据长度
+                    "data": res.data, //解析数据列表
+                    "now_dir": res.now_dir,
+                    "father_dir": res.file_superior_dir
+                };
+            }
+        });
+
+        // 行工具栏 
+        table.on('tool(fileTable)', function (obj) {
+            var event = obj.event;
+            var data = obj.data;
+            var file_id = obj.data.id;
+            switch (event) {
+                case 'edit':
+                    break;
+                case 'del':
+                    $.ajax({
+                        type: 'GET',//get或post
+                        url: '/api/file/delete',//请求的地址
+                        timeout: '',
+                        async: true,
+                        data: {
+                            'file': file_id,
+                        },
+                        dataType: 'json',//text,json,xml,jsonp
+                        success: function (res) {
+                            if (res.code == 200) {
+                                //location.reload()
+                                table.reload('testReload', {
+                                    url: '/api2/file/query/total/' + localStorage.getItem('now_dir')
+                                    , where: {
+                                        'page': 1,
+                                        'limit': 10,
+                                    } //设定异步数据接口的额外参数
+                                    //,height: 300
+                                })
+                                layer.msg(res.msg)
+                            }
+
+                        }, error: function (res) { },
+                    })
+                    break;
+                case 'view':
+                    //window.location.href = '/api2/view/' + file_id
+                    window.open('/api/view/' + file_id)
+                    break;
+                case 'share':
+                    layer.open({
+                        type: 2,//1 dom或文本，2 iframe,3 加载层,4 tips
+                        shadeClose: true,
+                        area: ['700px', '500px'],
+                        content: '/share/' + file_id,
+                    });;
+                    break;
+                case 'toDir':
+                    if (data.file_type == 'dir') {
+                        table.reload('testReload', {
+                            url: '/api/file/query/total/' + file_id
+                            , where: {
+                            } //设/定异步数据接口的额外参数
+                            //,height: 300
+                        });
+                    } else {
+                        layer.msg('非文件夹，请点击查看按钮', { 'icon': 2 });
+                    }
+                    break;
+                case 'download':
+                    window.location.href='/api/download/'+file_id+'/admin'
+                    break;
+                default:
+                    break;
+            }
+        })
+
+
+        // 修改文件名
+        table.on('edit(fileTable)', function (obj) {
+            var value = obj.value;
+            var file_id = obj.data.id;
+            var field = obj.field;
+            console.log(field)
+            $.ajax({
+                type: 'get',//get或post
+                url: '/api/file/filename/change',//请求的地址
+                async: true,
+                data: {
+                    'file_id': file_id,
+                    'file': field,
+                    'new_file_name': value
+                },
+                dataType: 'json',//text,json,xml,jsonp
+                success: function (res) {
+                    layer.msg(res.msg);
+                }, error: function (res) { },
+            })
+
+        })
+
+
+        //监听行单击事件（双击事件为：rowDouble）
+        // table.on('row(fileTable)', function (obj) {
+        //     file_name = obj.data.file_name;
+        //     file_type = obj.data.file_type;
+        //     if (file_type == 'dir') {
+        //         table.reload('testReload', {
+        //             url: '/api2/file/query/total/' + file_name
+        //             , where: {
+        //             } //设/定异步数据接口的额外参数
+        //             //,height: 300
+        //         });
+        //     } else {
+        //         console.log('非文件夹')
+        //     }
+        //     // layer.alert(JSON.stringify(data), {
+        //     //     title: '当前行数据：'
+        //     // });
+        //     //标注选中样式
+        //     obj.tr.addClass('layui-table-click').siblings().removeClass('layui-table-click');
+        // });
+
+
+        //头工具栏事件
+        table.on('toolbar(fileTable)', function (obj) {
+            var checkStatus = table.checkStatus(obj.config.id);
+            console.log(checkStatus)
+            var tr = obj.tr;
+            switch (obj.event) {
+
+                case 'flash':
+                    table.reload('testReload', {
+                        url: '/api/file/query/total/' + localStorage.getItem("now_dir")
+                        , where: {
+                        } //设定异步数据接口的额外参数
+                        //,height: 300
+                    });
+                    break;
+                case 'batchDeleteFile':
+                    var data = checkStatus.data;
+                    var file_id_list = []
+                    layer.confirm('确定要删除这些文件吗？', {
+                        btn: ['删除', '取消']
+                    }, function () {
+                        for (let i = 0; i < data.length; i++) {
+                            file_id_list.push(data[i].id);
+                        }
+                        console.log(file_id_list.length)
+                        if (file_id_list.length == 0) {
+                            layer.msg("您尚未选择!")
+                        } else {
+                            $.ajax({
+                                type: 'POST',//get或post
+                                url: '/api/file/delete/batch',//请求的地址
+                                async: true,
+                                data: JSON.stringify(file_id_list),
+                                contentType: 'application/json',
+                                dataType: 'json',//text,json,xml,jsonp
+                                success: function (res) {
+                                    if (res.code == 200) {
+                                        layer.msg(res.msg, { 'icon': 1 });
+                                        table.reload('testReload', {
+                                            url: '/api/file/query/total/' + localStorage.getItem("now_dir")
+                                            , where: {
+                                            } //设定异步数据接口的额外参数
+                                            //,height: 300
+                                        });
+                                        //location.reload()
+                                    }
+                                }, error: function (res) {
+                                },
+                            })
+                        }
+                    }, function () {
+                    });
+                    break;
+
+                case 'move':
+                    if (checkStatus.data.length == 0) {
+                        layer.msg('尚未选择任何要移动的文件夹或者文件！', { 'icon': 2 });
+                        return;
+                    }
+                    layer.open({
+                        type: 2,//1 dom或文本，2 iframe,3 加载层,4 tips
+                        shadeClose: true,
+                        area: ['700px', '500px'],
+                        content: '/tree?file_id=' + checkStatus.data[0].id
+                        , success: function (layero) {
+                            console.log('5555555')
+                        }
+                    });
+                    break;
+
+                case 'returnTopDir':
+                    table.reload('testReload', {
+                        url: '/api/file/query/total/0'
+                        , where: {
+                        } //设定异步数据接口的额外参数
+                        //,height: 300
+                    });
+                    break
+
+                case 'returnDir':
+                    table.reload('testReload', {
+                        url: '/api/file/query/total/' + localStorage.getItem('father_dir')
+                        , where: {
+                        } //设定异步数据接口的额外参数
+                        //,height: 300
+                    });
+                    break;
+
+                case 'getInfo':
+                    layer.open({
+                        type: 1,//1 dom或文本，2 iframe,3 加载层,4 tips
+                        shadeClose: true,
+                        area: ['400px', '300px'],
+                        content: `<table class="layui-table" lay-even lay-skin="row" lay-size="lg">
+                    <colgroup>
+                        <col width="150">
+                        <col>
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>储存文件数目</th>
+                            <th>文件所占用空间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{total}}</td>
+                            <td>{{size}}</td>
+                        </tr>
+                    </tbody>
+                </table>`
+                        , success: function (layero) {
+
+                        }
+                    });
+                    break;
+            };
+        });
+    });
+</script>
+<script>
+    function createDir(tip) {
+
+        if (tip == 'notice') {
+            layer.open({
+                type: 1,//1 dom或文本，2 iframe,3 加载层,4 tips
+                shadeClose: true,
+                area: '500px',
+                title: '新建文件夹',
+                content: `
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">文件夹名称</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="dirName" id="dirName" value="" required lay-verify="required" placeholder="请输入文件夹名称"
+                                    autocomplete="off" class="layui-input">
+                            </div>
+                        </div>
+                        <center>
+                            <button class="layui-btn layui-btn-sm" lay-event="createDir" onclick="createDir('get')">创建</button>
+                            <br>
+                        </center>
+                        `
+                , success: function (layero) {
+                }
+            });
+        }
+        if (tip == 'get') {
+            var dir_name = document.getElementById("dirName").value
+            $.ajax({
+                type: 'get',//get或post
+                url: '/api/create/dir',//请求的地址
+                timeout: '3000',
+                async: true,
+                data: {
+                    'file_superior_dir': localStorage.getItem('now_dir'),
+                    'new_dir_name': dir_name
+                },
+                dataType: 'json',//text,json,xml,jsonp
+                success: function (res) {
+                    if (res.code == 200) {
+                        layer.msg(res.msg, { 'icon': 1 });
+                        layui.use('table', function () {
+                            var table = layui.table;
+                            table.reload('testReload', {
+                                url: '/api/file/query/total/' + localStorage.getItem('now_dir')
+                                , where: {
+                                } //设/定异步数据接口的额外参数
+                                //,height: 300
+                            });
+                        })
+                    } else {
+                        layer.msg(res.msg, { 'icon': 2 });
+                    }
+                }, error: function (res) { },
+            })
+        }
+    }
+</script>

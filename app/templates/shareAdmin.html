@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>个人网盘助手</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <script src="/static/layui/layui.all.js"></script>
+    <script src="/static/jquery.js"></script>
+</head>
+<ul class="layui-nav layui-bg-blue">
+    <li class="layui-nav-item"><a href="">
+            <h2>个人网盘助手</h2>
+        </a></li>
+    <li class="layui-nav-item"><a href="/index">首页</a></li>
+    <li class="layui-nav-item"><a target='_blank'
+      onclick='window.location.href="/upload/"+localStorage.getItem("now_dir")'>文件上传</a></li>
+    <li class="layui-nav-item layui-this"><a href="/share/admin">分享管理</a></li>
+    <li class="layui-nav-item"><div id='time'></div></li>
+</ul>
+<body>
+    <div class="layui-container"><br>
+      <p>若文件有误，请及时刷新</p>
+        <table class="layui-table">
+            <thead>
+              <tr>
+                <th>链接id</th>
+                <th>文件名称</th>
+                <th>过期时间</th>
+                  <th>分享链接</th>
+                <th>访问次数</th>
+                <th>密码</th>
+                  <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+                {% for Share in share_file %}
+              <tr>
+                <td>{{Share.id}}</td>
+                <td>{{Share.share_file_name}}</td>
+                  <td>{{Share.share_last_time.strftime('%Y-%m-%d')}}</td>
+                  <td><a href="/share/download/{{Share.share_url}}" target="_blank">/share/download/{{Share.share_url}}</a></td>
+                  <td>{{Share.share_view_time}}</td>
+                  <td>{{Share.share_password}}</td>
+                <td><a href=/api/share/delete/{{Share.id}} type="button" target="_blank">取消分享</button></td>
+              </tr>
+             {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

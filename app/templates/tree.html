@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>文件移动</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <script src="/static/layui/layui.all.js"></script>
+    <script src="/static/jquery.js"></script>
+</head>
+<fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;">
+    <legend>文件移动  点击文件夹移动</legend>
+</fieldset>
+<!-- <div class="layui-btn-container">
+    <button type="button" class="layui-btn layui-btn-sm" lay-demo="getChecked">移动</button>
+</div> -->
+<!-- <div id="tree" class="demo-tree demo-tree-box" style="width: 500px; height: 300px; overflow: scroll;"></div> -->
+<div id="tree" class="demo-tree-more"></div>
+
+</html>
+
+<script>
+    layui.use(['tree', 'util'], function () {
+        var tree = layui.tree
+            , layer = layui.layer
+            , util = layui.util
+        var data = ''
+        $.ajax({
+            type: 'get',//get或post
+            url: '/api/file/query/total/dir',//请求的地址
+            timeout: '3000',
+            async: true,
+            dataType: 'json',//text,json,xml,jsonp
+            success: function (res) {
+                data = res.data
+                tree.render({
+                    elem: '#tree'
+                    , data: data
+                    //, showCheckbox: true  //是否显示复选框
+                    , id: 'demoId1'
+                    , showLine: false
+                    , isJump: true //是否允许点击节点时弹出新窗口跳转
+                    , click: function (obj) {
+                        var data = obj.data;  //获取当前点击的节点数据
+                        console.log(data.id)
+                        layer.confirm('确定要移动到文件夹 ' + JSON.stringify(data.title) + "吗", {
+                            btn: ['确定', '取消']
+                        }, function (index) {
+                            $.ajax({
+                                type: 'get',//get或post
+                                url: '/api/file/move',//请求的地址
+                                timeout: '3000',
+                                async: true,
+                                data: {
+                                    'file_id': window.location.href.split('?')[1].split('=')[1],
+                                    'to_file_id': data.id
+                                },
+                                dataType: 'json',//text,json,xml,jsonp
+                                success: function (res) {
+                                    layer.msg(res.msg);
+                                }, error: function (res) { },
+                            })
+                            layer.close(index);
+                        }, function () {
+
+                        });
+                    }
+                });
+            }, error: function (res) { },
+        })
+
+
+        //按钮事件
+        // util.event('lay-demo', {
+        //     getChecked: function (othis) {
+        //         var checkedData = tree.getChecked('demoId1'); //获取选中节点的数据
+        //         if (checkedData.length > 1) {
+        //             layer.msg('只能选择一个文件夹！', { 'icon': 2 });
+        //             return;
+        //         } if (checkedData.length == 0) {
+        //             layer.msg('您尚未选择文件夹！', { 'icon': 2 });
+        //             return;
+        //         }
+        //         // layer.alert(JSON.stringify(checkedData[0].id), { shade: 0 });
+        //         // console.log(checkedData);
+
+        //     }
+        //     , setChecked: function () {
+        //         tree.setChecked('demoId1', [12, 16]); //勾选指定节点
+        //     }
+        //     , reload: function () {
+        //         //重载实例
+        //         tree.reload('demoId1', {
+
+        //         });
+
+        //     }
+        // });
+    });
+
+</script>

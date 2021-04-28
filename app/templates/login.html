@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>个人网盘登陆</title>
+<meta name="keywords" content="">
+<meta name="description" content="">
+<meta name="viewport" content="width=device-width">
+<link href="/static/public/css/base.css" rel="stylesheet" type="text/css">
+<link href="/static/public/css/login.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<p style="padding-top: 20px;padding-left: 20px;font-size: large;color: blanchedalmond;">您的在线网盘/局域网文件助手</p>
+<div class="login">
+   <center><h1 style="font-size: 100px;padding-bottom: 20px;font-weight: 100;">个人网盘</h1>
+            <p style="font-size: 20px;color: aqua;">账号/密码</p>
+</center>
+<form action="/api/login" method="post" id="form">
+	<!-- <div class="logo"></div> -->
+    <div class="login_form">
+    	<div class="user">
+        	<input class="text_value" value="" name="username" type="text" id="username">
+            <input class="text_value" value="" name="password" type="password" id="password">
+        </div>
+        <button class="button" type="submit" onclick="login()">登录</button>
+    </div>
+    </form>
+</div>
+<center>
+    <h3 style="font-size: 50px;color: crimson;">{{error}}</h3>
+</center>
+<!-- <script>var basedir='public/ui/';</script>
+<script src="/static/public/ui/config.js"></script> -->
+<script>
+function login(params) {
+    var password = document.getElementById('password')
+    $.ajax({
+        type:'POST',//get或post
+        url:'/api/login',//请求的地址
+        timeout:'3000',
+        async:true,
+        data:{
+            'pwd':password
+        },
+        dataType:'json',//text,json,xml,jsonp
+        success:function(res){
+            alert(res)
+        },error:function(res){},
+    })
+}
+</script>
+<div style="display:none"><script src='http://v7.cnzz.com/stat.php?id=155540&web_id=155540' language='JavaScript' charset='gb2312'></script></div>
+</body>
+</html>

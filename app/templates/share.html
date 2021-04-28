@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>个人网盘助手</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <script src="/static/layui/layui.all.js"></script>
+    <script src="/static/jquery.js"></script>
+</head>
+
+<body>
+    <div class="layui-container">
+        <div class="layui-form-item">
+            <table class="layui-table" lay-even lay-skin="line" lay-size="lg">
+                <colgroup>
+                    <col width="150">
+                    <col>
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th style="width:300px;">文件名称</th>
+                        <th>文件大小</th>
+                        <th>分享时间</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <td>{{file_name}}</td>
+                    <td>{{file_size}}</td>
+                    <td>
+                        <div class="layui-input-inline">
+                            <input type="radio" name="shareTime" id='shareTime' value="7" title="7" checked>7天
+                            <input type="radio" name="shareTime" id='shareTime' value="30" title="30" >30天
+                        </div>
+                    </td>
+                </tbody>
+            </table>
+        </div>
+        <center><button type="button" class="layui-btn layui-btn-normal" onclick="share(id)" id={{file_id}}>分享</button></center>
+    </div>
+    <br>
+    <div id="flash"></div>
+    </div>
+</body>
+
+</html>
+<script>
+    layui.use(['layer', 'jquery', 'element', 'form'], function (args) {
+        var $ = layui.jquery, layer = layui.layer, element = layui.element, form = layui.form;
+
+    });
+    // 点击分享按钮
+</script>
+<script>
+        function share(params) {
+        var shareTime = document.getElementById('shareTime')
+        console.log(shareTime.value)
+        $.ajax({
+            type:'get',//get或post
+            url:'/api/file/share',//请求的地址
+            async:true,
+            data:{
+                'file_id':params,
+                'file_end_time':shareTime.value,
+            },
+            dataType:'json',//text,json,xml,jsonp
+            success:function(res){
+                if (res.code==200) {
+                    layer.msg(res.msg);  
+                }if (res.code=302) {
+                    $('#flash').html(`<blockquote class="layui-elem-quote layui-quote-nm">
+                        ${res.msg}
+</blockquote>`)
+                }
+            },error:function(res){},
+        })
+    }
+</script>
