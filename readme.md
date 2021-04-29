@@ -39,3 +39,5 @@ python start.py
 ## 其他
 
 第一代版本，部分功能还没有完善，留存在这，慢慢修改。
+## 界面预览
+https://blog.csdn.net/qq_44198436/article/details/113646856
