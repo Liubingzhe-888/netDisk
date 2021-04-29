@@ -36,7 +36,7 @@ def query_files(file_id):
                     'file_name':file.file_name,
                     'file_create_time':format_time(file.file_create_time),
                     'file_size':size_format(int(file.file_size)) if file.file_type!='dir' else '',
-                    'file_superior_dir':file.file_superior_dir if file_id!=0 else 'root',
+                    'file_superior_dir':File.query.get(file.file_superior_dir).file_name if file_id!=0 else 'root',
                     'file_type':file.file_type,
                     'file_upload_user':file.file_upload_user
                 }
